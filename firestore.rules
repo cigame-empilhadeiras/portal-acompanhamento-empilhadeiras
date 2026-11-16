@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- funções auxiliares ----------
+    function signedIn() { return request.auth != null && request.auth.token.email != null; }
+    function mail() { return request.auth.token.email.lower(); }
+    function userDoc() { return get(/databases/$(database)/documents/usuarios/$(mail())).data; }
+    function registered() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(mail()))
+        && userDoc().get('ativo', true) == true;
+    }
+    function papel() { return userDoc().get('papel', ''); }
+    function isAdmin() { return registered() && papel() == 'admin'; }
+    function isSup()   { return registered() && papel() in ['admin', 'supervisor']; }
+    function isOp()    { return registered() && papel() in ['admin', 'supervisor', 'operador', 'tablet']; }
+
+    // ---------- usuários e papéis ----------
+    // Cada pessoa lê o próprio cadastro; quem já foi liberado lê a lista. Só administrador altera.
+    match /usuarios/{id} {
+      allow read:  if signedIn() && (id == mail() || registered());
+      allow write: if isAdmin();
+    }
+
+    // Registro de quem abriu o painel (alimenta "Acessos recentes"). Cada um escreve só o próprio documento.
+    match /acessos/{uid} {
+      allow create, update: if signedIn() && uid == request.auth.uid;
+      allow read: if isAdmin();
+    }
+
+    // ---------- operação ----------
+    // Checklists e horímetro: operadores criam; supervisores corrigem ou apagam.
+    match /checklists/{id} {
+      allow read:   if registered();
+      allow create: if isOp();
+      allow update, delete: if isSup();
+    }
+    match /horimetro/{id} {
+      allow read:   if registered();
+      allow create: if isOp();
+      allow update, delete: if isSup();
+    }
+    // Resolução de pendências, gastos e manutenção preventiva: supervisor e administrador.
+    match /resolucoes/{id}  { allow read: if registered(); allow write: if isSup(); }
+    match /lancamentos/{id} { allow read: if registered(); allow write: if isSup(); }
+    match /preventivas/{id} { allow read: if registered(); allow write: if isSup(); }
+    // Configurações (intervalo de preventiva etc.): só administrador.
+    match /config/{id}      { allow read: if registered(); allow write: if isAdmin(); }
+
+    // Todo o resto fica bloqueado.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
