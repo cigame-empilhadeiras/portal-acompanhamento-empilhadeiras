@@ -12,6 +12,8 @@ Painel de gestão da frota de empilhadeiras elétricas: gastos, horímetro, manu
 | `fb-adapter.js` | Tela de login e ligação com o Firebase. Não precisa mexer. |
 | `firestore.rules` | Regras de segurança do banco de dados (quem lê e quem escreve). |
 | `modelos3d/` | Modelos 3D interativos das três empilhadeiras. |
+| `checklist/` | App do checklist para os tablets (instalável no Android e no iPad). O `checklist/index.html` é gerado a partir do `index.html` por `tools/gerar_checklist.py`; a publicação roda o script sozinha. |
+| `app/` | Instalador Android (.apk) do app do checklist. |
 | `relatorio/` | Relatório técnico em PDF. |
 | `.github/workflows/pages.yml` | Publica o site automaticamente no GitHub Pages. |
 

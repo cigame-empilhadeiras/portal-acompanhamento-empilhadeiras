@@ -1,8 +1,8 @@
 /* Service worker do app do checklist.
    Arquivos do portal: busca na rede primeiro (para receber atualizações) e usa a cópia guardada se estiver sem internet.
    Bibliotecas do Firebase e fontes: usa a cópia guardada (não mudam). Dados do Firebase nunca passam por aqui. */
-const VERSAO = "checklist-v1";
-const BASE = ["./", "./index.html", "./fb-adapter.js", "./firebase-config.js", "./checklist.webmanifest",
+const VERSAO = "portal-v2";
+const BASE = ["./", "./index.html", "./fb-adapter.js", "./firebase-config.js", "./portal.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
