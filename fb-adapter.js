@@ -63,8 +63,16 @@
         S.Au.onAuthStateChanged(S.auth, function (user) {
           if (!user) { S.user = null; var go = function () { showLogin("login"); }; document.body ? go() : document.addEventListener("DOMContentLoaded", go); return; }
           S.user = user; S.email = String(user.email || "").toLowerCase(); S.papel = null; S.nome = "";
-          S.F.getDoc(S.F.doc(S.db, "usuarios", S.email)).then(function (sn) { if (sn.exists()) { var d = sn.data(); if (d.ativo !== false) { S.papel = d.papel || null; S.nome = d.nome || ""; } } })
-            .catch(function () { }).then(function () { hide(); resolveReady(user); });
+          window.FB_DIAG = "";
+          S.F.getDoc(S.F.doc(S.db, "usuarios", S.email)).then(function (sn) {
+            if (!sn.exists()) { window.FB_DIAG = 'Não existe o documento "' + S.email + '" na coleção "usuarios" do banco (default).'; return; }
+            var d = sn.data(), ks = Object.keys(d).map(function (k) { return k + " = " + JSON.stringify(d[k]) + " (" + (typeof d[k] === "string" ? "string" : typeof d[k] === "boolean" ? "boolean" : typeof d[k]) + ")"; }).join(" · ");
+            if (d.ativo === false) window.FB_DIAG = 'O cadastro está com ativo = false. Campos: ' + ks;
+            else { S.papel = d.papel || null; S.nome = d.nome || ""; if (S.papel !== "admin" && S.papel !== "supervisor" && S.papel !== "operador" && S.papel !== "tablet") window.FB_DIAG = 'O campo papel não é reconhecido. Campos: ' + ks; }
+          }).catch(function (er) {
+            var c = er && er.code || String(er);
+            window.FB_DIAG = c === "permission-denied" ? "O Firestore recusou a leitura (permission-denied): as regras do arquivo firestore.rules não estão publicadas neste projeto." : "Erro ao ler o cadastro: " + c + (er && er.message ? " · " + er.message : "");
+          }).then(function () { if (window.FB_DIAG) console.warn("Diagnóstico de acesso:", window.FB_DIAG); hide(); resolveReady(user); });
         });
       });
     }).catch(function (er) { console.error(er); var go = function () { show('<h1>Não foi possível carregar o Firebase</h1><p>Verifique a internet e a configuração. (' + esc(er && er.message || er) + ')</p>'); }; document.body ? go() : document.addEventListener("DOMContentLoaded", go); });
