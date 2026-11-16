@@ -5,6 +5,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Controle de Empilhadeiras e Gastos</title>
+<link rel="manifest" href="checklist.webmanifest">
+<meta name="theme-color" content="#0f2447">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Checklist">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<script>window.APPMODE=/[?&]app=/.test(location.search)||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;if(APPMODE)document.documentElement.classList.add("appmode")</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap">
 <script src="firebase-config.js"></script>
 <script src="fb-adapter.js"></script>
@@ -243,7 +252,7 @@ button.pback{background:transparent;cursor:pointer;font-family:inherit}.pback:ho
 .ptit{color:var(--acc);min-height:30px}
 /* ===== app do tablet, supervisão e usuários ===== */
 .mechip{font-size:.8rem;color:#cfd8e1;margin-left:auto}
-.op a.pback,.op header .sub{display:none}body.vw nav button[data-v="app"],body.vw nav button[data-v="usuarios"],body.vw .ptile[href="#app"],body.vw .ptile[href="#usuarios"],body.vw section.card:has(#nAdd),body.vw section.card:has(#hAdd),body.vw .filters:has(#pAdd),body.vw button.del,body.vw button[data-col="checklists"]{display:none!important}.op header{padding-bottom:4px}
+.appmode .navrow,.appmode a.pback{display:none!important}.instc{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.instc>div{flex:1 1 260px}.op a.pback,.op header .sub{display:none}body.vw nav button[data-v="app"],body.vw nav button[data-v="usuarios"],body.vw .ptile[href="#app"],body.vw .ptile[href="#usuarios"],body.vw section.card:has(#nAdd),body.vw section.card:has(#hAdd),body.vw .filters:has(#pAdd),body.vw button.del,body.vw button[data-col="checklists"]{display:none!important}.op header{padding-bottom:4px}
 .mechip b{color:#fff}
 .stat .s-bad small:last-child,.stat small+small{display:block}
 .appx .btn{min-height:52px;font-size:1rem}.appx select,.appx input{min-height:48px;font-size:1rem}
@@ -370,6 +379,7 @@ body[data-v="portal"] a.pback{display:none}
 <section class="card"><h2>Histórico de checklists</h2><div class="scroll"><table id="kH" style="min-width:760px"></table></div></section></div>
 
 <div data-sec="app" class="appx" style="display:grid;gap:16px" hidden>
+<section class="card instc" id="instCard" hidden><div><b>Instale o app neste tablet</b><p class="note" id="instTxt" style="margin:4px 0 0">Fica com ícone na tela inicial e abre direto no checklist, em tela cheia.</p></div><button class="btn" id="instBtn" type="button" hidden>Instalar app</button><button class="btn ghost" id="instX" type="button" aria-label="Fechar aviso">Agora não</button></section>
 <section class="card idcard"><span>Operador:</span><b id="appNome">—</b><span id="appMail" style="color:var(--mute)"></span><button class="btn ghost" id="tOut" type="button" hidden style="margin-left:auto">Trocar operador</button></section>
 <section class="card" id="tabLogin" hidden><h2>Quem vai fazer o checklist?</h2><div class="filters"><label>Operador <select id="tOp"></select></label><label>Senha <input id="tPw" type="password" autocomplete="off"></label><button class="btn" id="tGo" type="button">Entrar</button></div><p class="note" id="tMsg" aria-live="polite">Escolha o seu nome e digite a sua senha.</p></section>
 <div id="appBody" style="display:grid;gap:16px">
@@ -741,7 +751,7 @@ const allowed=()=>ME.pending||(!ME.local&&!ME.uLoaded)||needPw()||needSetup()?[]
 const isAdm=()=>ME.papel==="admin",canSup=()=>ME.papel==="admin"||ME.papel==="supervisor";
 function paintTitle(){const t=PT[CURV]||"",e=document.getElementById("ptit");if(!e)return;try{e.innerHTML=stencil(t,22)}catch(x){e.textContent=t}document.title=t+" · Controle da frota"}
 function go(v){location.hash=v;tabs()}
-function tabs(){const [hv,hm]=location.hash.slice(1).split(":");let v=[...ALL_PANELS,"lock"].includes(hv)?hv:(ME.papel==="operador"||ME.papel==="tablet"?"app":"portal");const al=allowed();if(v!=="lock"&&!al.includes(v))v=al[0]||"lock";
+function tabs(){const [hv,hm]=location.hash.slice(1).split(":");let v=[...ALL_PANELS,"lock"].includes(hv)?hv:(window.APPMODE||ME.papel==="operador"||ME.papel==="tablet"?"app":"portal");const al=allowed();if(v!=="lock"&&!al.includes(v))v=al[0]||"lock";
  CURV=v;paintTitle();document.querySelectorAll("[data-sec]").forEach(s=>s.hidden=s.dataset.sec!==v);document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
  $("flt").hidden=["horimetro","manutencao","checklists","m3d","app","usuarios","lock","portal"].includes(v);document.body.dataset.v=v;if(v==="m3d")load3d();Object.values(CH).forEach(c=>c.resize());if(v==="modelos"&&hm)setTimeout(()=>focusFicha(hm),80)}function openFicha(id){location.hash="modelos:"+(id||"");tabs()}function focusFicha(id){const i=FKM.findIndex(m=>m.id===id);if(i<0)return;SPI=i;BP.mi=i;renderSpT();renderBP();const c=$("spC");if(!c)return;c.scrollIntoView({behavior:"smooth",block:"start"});c.classList.remove("flash");void c.offsetWidth;c.classList.add("flash")}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));addEventListener("hashchange",tabs);
@@ -927,4 +937,5 @@ document.querySelectorAll("h2").forEach(h=>{const n=h.firstChild;if(n&&n.nodeTyp
 </body>
 </html>
 
+<script>(function(){if("serviceWorker" in navigator)addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(e){console.warn("SW",e)})});var dp=null,c=document.getElementById("instCard"),b=document.getElementById("instBtn"),t=document.getElementById("instTxt"),x=document.getElementById("instX");if(!c)return;var off=function(){try{return localStorage.getItem("instOff")==="1"}catch(e){return false}};var standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;var ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);if(standalone||off())return;if(ios){t.innerHTML="No Safari, toque em <b>Compartilhar</b> (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.";c.hidden=false}addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;b.hidden=false;c.hidden=false});b.onclick=function(){if(!dp)return;dp.prompt();dp.userChoice.finally(function(){dp=null;c.hidden=true})};addEventListener("appinstalled",function(){c.hidden=true});x.onclick=function(){c.hidden=true;try{localStorage.setItem("instOff","1")}catch(e){}};})()</script>
 </body></html>
